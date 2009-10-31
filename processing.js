@@ -662,13 +662,32 @@
       return p.ajax( url ).split( "\n" );              
     };
 
-    p.nf = function( num, pad ){
-      var str = "" + num;
-      while ( pad - str.length ){
-        str = "0" + str;
-      }
-      return str;
-    };
+    p.nf = function(value, leftDigits, rightDigits) { return nfCore(value, "", "-", leftDigits, rightDigits); };
+    p.nfs = function(value, leftDigits, rightDigits) { return nfCore(value, " ", "-", leftDigits, rightDigits); };
+    p.nfp = function(value, leftDigits, rightDigits) { return nfCore(value, "+", "-", leftDigits, rightDigits); };
+
+    function nfCore(value, plus, minus, leftDigits, rightDigits) {
+        var sign = value < 0 ? minus : plus;
+        var rightDigitsOfDefault = rightDigits == undefined ? 0 : rightDigits;
+        var absValue = Math.abs(value);
+        if (rightDigitsOfDefault != 0)
+            absValue *= Math.pow(10, rightDigitsOfDefault);
+
+        var number = Math.round(absValue);
+        var buffer = "";
+        var totalDigits = leftDigits + rightDigitsOfDefault;
+        while (totalDigits > 0 || number > 0) {
+            totalDigits--;
+            buffer = "" + (number % 10) + buffer;
+            number = Math.floor(number / 10);
+        }
+        if (rightDigitsOfDefault > 0) {
+            return sign + buffer.substring(0, buffer.length - rightDigits) +
+                "." + buffer.substring(buffer.length - rightDigits, buffer.length);
+        } else {
+            return sign + buffer;
+        }
+    }
 
     String.prototype.replaceAll = function( re, replace ){
       return this.replace( new RegExp( re, "g" ), replace );
