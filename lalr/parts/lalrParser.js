@@ -71,7 +71,6 @@ function Token(symbol_, index_, begin_, end_, text_) {
     this.b = begin_;
     this.e = end_;
     this.text = text_;
-    this.toString = function() { return this.text; };
 }
 
 function AstNode(symbol_, index_, begin_, end_, children_, rule_) {
@@ -81,16 +80,33 @@ function AstNode(symbol_, index_, begin_, end_, children_, rule_) {
     this.e = end_;
     this.children = children_;
     this.r = rule_;
-    this.toString = function() {
-        var s = "";
-        for (var i = 0; i < this.children.length; ++i) {
-            if (i > 0) { s += this.delimiter == undefined ? " " : this.delimiter; }
-            s += this.children[i].toString();
-        }
-        return s;
-    };
 }
 
+Token.prototype.match = function(s) { return this.n == s; };
+Token.prototype.toString = function() { return this.text; };
+AstNode.prototype.first = function() { return this.children[0]; };
+AstNode.prototype.match = function(s) {
+    if (typeof s == "string") {
+        return this.n == s;
+    } else {
+        if (this.n == s[0]) {
+            s.shift();
+            return s.length > 1 ? 
+                this.first().match(s) : this.first().match(s[0]);
+        }
+        else
+            return false;
+    }
+};
+AstNode.prototype.toString = function() {
+    var s = "";
+    for (var i = 0; i < this.children.length; ++i) {
+        if (i > 0) { s += this.delimiter == undefined ? " " : this.delimiter; }
+        s += this.children[i].toString();
+    }
+    return s;
+};
+    
 function DfaScanner(source, grammar) {
     this._source = source;
     this._grammar = grammar;
