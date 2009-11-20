@@ -19,7 +19,7 @@
 
 Identifier     = {IdLetter}{IdAlphaNumeric}*
 StringLiteral = '"' ( {String Chars} | '\' {Printable} )* '"'
-CharLiteral = {Quote}{String Chars}{Quote} | {Quote} '\' {Printable} +{Quote}
+CharLiteral = {Quote}{Char Chars}{Quote} | {Quote} '\' {Printable} {Char Chars}* {Quote}
 FloatingPointLiteral   = {Digit}+'.'{Digit}+{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
 FloatingPointLiteralExponent = {Digit}+'.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | {Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | '.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}?
 BooleanLiteral = 'true' | 'false'

@@ -15,7 +15,8 @@ var $async = {
 
     isEmpty: function() { return this.stack.length == 0; },
 
-    commit: function() {
+    commit: function(callback) {
+        this.operation(callback);
         while (this.newItems.length > 0)
             this.stack.push(this.newItems.pop());
     },
@@ -25,28 +26,35 @@ var $async = {
     },
 
     invoke: function invokeAsync(result, callback) {
+        var currentStack = $async.stack;
         if (result == $async) {
-            $async.operation($callback);
+            $async.commit($callback);
             return false;
         } else {
             if (callback != undefined) callback(result);
             return true;
         }
+        $async.stack = [];
 
         function $callback(result) {
-            $async.commit();
+            var savedStack = $async.stack;
+            $async.stack = currentStack;
+
             var ar = result;
             while (ar != $async && !$async.isEmpty()) {
                 var frame = $async.pop();
                 var context = frame.context;
                 if (frame.returnValue != undefined)
                     context[frame.returnValue] = ar;
-                frame.f.apply(frame.obj, [context]);
+                ar = frame.f.apply(frame.obj, [context]);
             }
-            if (ar == $async)
-                $async.operation($callback);
+            if (ar == $async) {
+                $async.commit($callback);
+            }
             else if (callback != undefined)
                 callback(ar);
+
+            $async.stack = savedStack;
         }
     }
 };

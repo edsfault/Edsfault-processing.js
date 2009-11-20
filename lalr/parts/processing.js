@@ -37,12 +37,26 @@
     };
 
     // IE Unfriendly AJAX Method
-    var ajax = function(url) {
+    var ajax = function(url, async) {
         var AJAX;
         if (AJAX = new XMLHttpRequest()) {
-            AJAX.open("GET", url, false);
-            AJAX.send(null);
-            return AJAX.responseText;
+            if (async) {
+                $async.operation = function(callback) {
+                    AJAX.open("GET", url, true);
+                    AJAX.onreadystatechange = function() {
+                        if (AJAX.readyState == 4) {
+                            callback(AJAX.responseText);
+                        }
+                    };
+                    AJAX.send(null);
+                };
+                return $async;
+            }
+            else {
+                AJAX.open("GET", url, false);
+                AJAX.send(null);
+                return AJAX.responseText;
+            }
         } else {
             return false;
         }
@@ -615,7 +629,7 @@
             looping = setInterval(function() {
 
                 try {
-                    if(!inDraw) p.redraw();
+                    if (!inDraw) p.redraw();
                 }
                 catch (e) {
                     clearInterval(looping);
@@ -666,7 +680,13 @@
 
         // Load a file or URL into strings     
         p.loadStrings = function loadStrings(url) {
-            return p.ajax(url).split("\n");
+            var $temp = p.ajax(expandUrl(url), true);
+            if ($temp == $async)
+                return $async.push(function(context) { with(context) {
+                    var lines = $temp2.split("\n");
+                    return lines;
+                }}, p, {}, "$temp2");
+            return $temp.split("\n");
         };
 
         p.nf = function(value, leftDigits, rightDigits) { return nfCore(value, "", "-", leftDigits, rightDigits); };
@@ -805,8 +825,13 @@
 
         };
 
-        //! This can't be right... right?
-        p.byte = function byte(aNumber) { return aNumber || 0; };
+        p.byte = function byte(aNumber) { return aNumber & 255; };
+
+        p.split = function (s, delimiter) { 
+            var sep = typeof(delimiter) == "number" ? 
+                String.fromCharCode(delimiter) : delimiter;
+            return s.split(sep);
+        }
 
         p.norm = function norm(aNumber, low, high) {
             var range = high - low;
@@ -1313,18 +1338,22 @@
                     context.drawImage(img, 0, 0);
                     img.data = buildImageObject(context.getImageData(0, 0, w, h));
                     img.data.img = img;
-                    img.mask = function() {};
+                    img.mask = function() { };
 
                     callback(img);
                 };
-		if(file.indexOf("://") >= 0)
-			img.src = file;
-		else
-                	img.src = "data/" + file;
+                img.src = expandUrl;
             };
 
             return $async;
         };
+
+        function expandUrl(file) {
+            if (file.indexOf("://") >= 0)
+                return file;
+            else
+                return "data/" + file;
+        }
 
         // Gets a single pixel or block of pixels from the current Canvas Context
         p.get = function get(x, y) {
@@ -1798,7 +1827,7 @@
                     case "|": return font["bar"]; break;
                     case "}": return font["braceright"]; break;
                     case "~": return font["asciitilde"]; break;
-                    // If the character is not 'special', access it by object reference   
+                    // If the character is not 'special', access it by object reference     
                     default: return font[chr]; break;
                 }
             } catch (e) { ; }

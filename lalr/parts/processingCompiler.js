@@ -249,9 +249,11 @@ function outBlockStatement(statement, context) {
     } else {
         if (context.statesOperation != undefined) {
             if (context.statesOperation.operation == "find") {
-                var name = statement.generated.name;
-                if (name == context.statesOperation.name) {
-                    context.statesOperation.operation = "found";
+                if (statement.generated != undefined) {
+                    var name = statement.generated.name;
+                    if (name == context.statesOperation.name) {
+                        context.statesOperation.operation = "found";
+                    }
                 }
                 return undefined;
             }
