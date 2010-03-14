@@ -26,7 +26,8 @@ class ProcessingTests(object):
 
   def isKnownFailure(self, testpath):
       # Assumes abs path for testpath
-      if testpath[testpath.index('/test/')+1:] in self.knownFailures:
+      normalpath = pathNormalizer.normalize(testpath)
+      if normalpath[normalpath.index('/test/')+1:] in self.knownFailures:
         return True
       else:
         return False
@@ -250,6 +251,27 @@ class ProcessingTests(object):
 
               if tmpFile:
                 jsshellhelper.cleanUp(tmpFile)
+
+class DefaultPathNormalizer:
+  def normalize(self, path):
+    return path
+
+class WinPathNormalizer:
+  def normalize(self, path):
+    backslsh = path.replace('\\', '/')
+    if backslsh[1] == ':':
+      return '/' + backslsh[0] + backslsh[2:]
+    else:
+      return backslsh
+
+def createPathNormalizer():
+  if os.sep == '\\':
+    return WinPathNormalizer()
+  else:   
+    return DefaultPathNormalizer()
+
+# normalizes path to standard form: /dir/subdir/file.ext
+pathNormalizer = createPathNormalizer()
 
 def main():
     parser = OptionParser()
