@@ -25,7 +25,7 @@ function parseLalr(grammar, source) {
                 }
             }
             if (action == null) {
-                throw ("Unexpected symbol: " + token.text);
+                throw ("Unexpected symbol: " + token.text + ":" + token.b.r);
             }
 
             switch (action.k) {
@@ -85,6 +85,7 @@ function AstNode(symbol_, index_, begin_, end_, children_, rule_) {
 Token.prototype.match = function(s) { return this.n == s; };
 Token.prototype.toString = function() { return this.text; };
 AstNode.prototype.first = function() { return this.children[0]; };
+AstNode.prototype.last = function() { return this.children[this.children.length - 1]; };
 AstNode.prototype.match = function(s) {
     if (typeof s == "string") {
         return this.n == s;

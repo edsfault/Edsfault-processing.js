@@ -20,7 +20,7 @@
 Identifier     = {IdLetter}{IdAlphaNumeric}*
 StringLiteral = '"' ( {String Chars} | '\' {Printable} )* '"'
 CharLiteral = {Quote}{Char Chars}{Quote} | {Quote} '\' {Printable} {Char Chars}* {Quote}
-FloatingPointLiteral   = {Digit}+'.'{Digit}+{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
+FloatingPointLiteral   = {Digit}+'.'{Digit}*{FloatTypeSuffix}? | {Digit}+{FloatTypeSuffix} | '.'{Digit}+{FloatTypeSuffix}?
 FloatingPointLiteralExponent = {Digit}+'.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | {Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}? | '.'{Digit}+{ExponentPartIndicator}{Sign}?{Digit}+{FloatTypeSuffix}?
 BooleanLiteral = 'true' | 'false'
 NullLiteral = 'null'
@@ -65,6 +65,9 @@ Comment Line = '//'
 <Type>  ::= <PrimitiveType>
          |  <ReferenceType>
 
+<TypeNoArray>  ::= <PrimitiveType>
+         |  <ReferenceTypeNoArray>
+
 <PrimitiveType> ::= <NumericType>
                   | 'boolean'
 
@@ -86,19 +89,20 @@ Comment Line = '//'
 
 <ReferenceType> 
         ::= <ClassOrInterfaceType>
-         | 'string'
-         |  <ArrayType>
+         | <ArrayType>
 
-<ClassOrInterfaceType> ::= <Name>
+<ReferenceTypeNoArray> 
+        ::= <ClassOrInterfaceType>
+
+<ClassOrInterfaceType> ::= <Name> 
 
 <ClassType> ::= <ClassOrInterfaceType>
 
 <InterfaceType> ::= <ClassOrInterfaceType>
 
-<ArrayType>
-        ::= <PrimitiveType> '[' ']'
-         |  <Name> '[' ']'
-         |  <ArrayType> '[' ']'
+<ArrayType> ::= <PrimitiveType> '[' ']'
+         | <Name> '[' ']'
+         | <ArrayType> '[' ']'
 
 <Name>
         ::= <SimpleName>
@@ -318,6 +322,7 @@ Comment Line = '//'
          |  <ContinueStatement>
          |  <ReturnStatement>
          |  <TryStatement>
+         |  <ThrowStatement>
 
 <EmptyStatement> 
         ::= ';'
@@ -415,6 +420,9 @@ Comment Line = '//'
         ::= 'return' <Expression> ';'
          |  'return' ';'
 
+<ThrowStatement> 
+        ::= 'throw' <Expression> ';'
+
 <TryStatement>
         ::= 'try' <Block> <Catches>
 
@@ -451,10 +459,9 @@ Comment Line = '//'
          |  <ArgumentList> ',' <Expression>
 
 <ArrayCreationExpression> 
-        ::= 'new' <PrimitiveType> <DimExprs> <Dims>
-         |  'new' <PrimitiveType> <DimExprs>
-         |  'new' <ClassOrInterfaceType> <DimExprs> <Dims>
-         |  'new' <ClassOrInterfaceType> <DimExprs>
+        ::= 'new' <TypeNoArray> <DimExprs> <Dims>
+         |  'new' <TypeNoArray> <DimExprs>
+         |  'new' <TypeNoArray> <Dims> <ArrayInitializer>
 
 <DimExprs> 
         ::= <DimExpr>

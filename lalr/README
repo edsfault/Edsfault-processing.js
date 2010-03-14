@@ -1,0 +1,9 @@
+This portion replaces standard processing parser with LALR(1) based.
+
+To replace the standard parser with lalr one, run:
+
+$ make build-lalr
+
+To restore original
+
+$ make restore-lalr

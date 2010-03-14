@@ -1,6 +1,7 @@
 # If your jsshell isn't at ./tools/js/src/js, update JS below
 TOOLSDIR=./tools
 JS=$(TOOLSDIR)/js/src/js
+LALRDIR=./lalr
 
 # Rule for making pure JS code from a .pde (runs through parser + beautify)
 %.js : %.pde
@@ -70,3 +71,14 @@ check-one:
 
 clean:
 	rm -fr ./release
+
+$(LALRDIR)/parts/processing.js:
+	cp ./processing.js $(LALRDIR)/parts/processing.js
+
+backup-lalr: $(LALRDIR)/parts/processing.js
+
+build-lalr: $(LALRDIR)/parts/processing.js
+	$(LALRDIR)/buildlalr.py --build $(LALRDIR)/parts/processing.js $(LALRDIR)/grammar/Processing.xml $(LALRDIR)/parts ./processing.js
+
+restore-lalr:
+	cp $(LALRDIR)/parts/processing.js ./processing.js
