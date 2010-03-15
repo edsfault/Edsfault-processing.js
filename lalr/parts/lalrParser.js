@@ -25,7 +25,7 @@ function parseLalr(grammar, source) {
                 }
             }
             if (action == null) {
-                throw ("Unexpected symbol: " + token.text + ":" + token.b.r);
+                throw ("Unexpected symbol: " + token.text + "[" + token.b.r + ","  + token.b.c + "]");
             }
 
             switch (action.k) {

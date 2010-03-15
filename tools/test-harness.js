@@ -117,4 +117,13 @@ function _testRunnerMain() {
   print('TEST-SUMMARY: ' + _passCount + '/' + _failCount);
 };
 
+// jUnit-style: http://junit.org/apidocs/index.html?org/junit/Assert.html
+var Assert = new Object();
+Assert.assertArrayEquals  = _checkEqual;
+Assert.assertEquals = _checkEqual;
+Assert.assertFalse = _checkFalse;
+Assert.assertNull = _checkIsNull;
+Assert.assertTrue = _checkTrue;
+Assert.fail = _fail;
+
 _testRunnerMain();

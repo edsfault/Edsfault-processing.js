@@ -94,6 +94,17 @@ Processing.lib.UnitTests = function() {
     this._printTestSummary = function() {
       print('TEST-SUMMARY: ' + _passCount + '/' + _failCount);
     };
+
+    // jUnit-way: http://junit.org/apidocs/index.html?org/junit/Assert.html
+    var Assert = new Object();
+    Assert.unitTests = this;
+    Assert.assertArrayEquals  = function() { this.unitTests._checkEqual.apply(this.unitTests, arguments); };
+    Assert.assertEquals = function() { this.unitTests._checkEqual.apply(this.unitTests, arguments); };
+    Assert.assertFalse = function() { this.unitTests._checkFalse.apply(this.unitTests, arguments); };
+    Assert.assertNull = function() { this.unitTests._checkIsNull.apply(this.unitTests, arguments); };
+    Assert.assertTrue = function() { this.unitTests._checkTrue.apply(this.unitTests, arguments); };
+    Assert.fail = function() { this.unitTests._fail.apply(this.unitTests, arguments); };
+    this.Assert = Assert;
   }
 }
 

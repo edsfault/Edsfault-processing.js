@@ -128,6 +128,18 @@ WordMap.prototype.finishAdd = __empty_func__;
 var Treemap         = __empty_func__;
 Treemap.prototype.draw = __empty_func__;
 
+var HashMap         = __empty_func__;
+HashMap.prototype.get = __empty_func__;
+HashMap.prototype.put = __empty_func__;
+
+var PFont           = __empty_func__;
+PFont.list = __empty_func__;
+
+var IOException     = __empty_func__;
+var ParseException     = __empty_func__;
+var SearchException     = __empty_func__;
+var NullPointerException     = __empty_func__;
+
 var FixedSpring     = __empty_func__;
 var Spring2D        = __empty_func__;
 var Particle        = __empty_func__;
