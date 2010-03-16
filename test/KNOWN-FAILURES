@@ -5,11 +5,8 @@
 
 test/parser/Fry-Visualizing-Data/ch05-salaryper/step_08b_web/step_08b_web.pde
 test/parser/Fry-Visualizing-Data/ch06-zipdecode/round_09c_focus_handling/round_09c_focus_handling.pde
-test/parser/Fry-Visualizing-Data/ch06-zipdecode/round_09c_focus_handling/Slurper.pde
-test/parser/Fry-Visualizing-Data/ch07-hierarchies/equator_03b/WordMap.pde
 test/parser/Fry-Visualizing-Data/ch07-hierarchies/file_tree_queue_08b/file_tree_queue_08b.pde
 test/parser/Fry-Visualizing-Data/ch07-hierarchies/filetreemap_06b/filetreemap_06b.pde
-test/parser/Fry-Visualizing-Data/ch07-hierarchies/filetreemap_06b/FolderItem.pde
 test/parser/Fry-Visualizing-Data/ch08-graphlayout/step_06c_variable_size_nodes/step_06c_variable_size_nodes.pde
 test/parser/Fry-Visualizing-Data/ch08-graphlayout/step_07c_save_pdf/step_07c_save_pdf.pde
 test/parser/Fry-Visualizing-Data/ch08-graphlayout/step_08c_graphviz/step_08c_graphviz.pde

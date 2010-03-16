@@ -128,18 +128,6 @@ WordMap.prototype.finishAdd = __empty_func__;
 var Treemap         = __empty_func__;
 Treemap.prototype.draw = __empty_func__;
 
-var HashMap         = __empty_func__;
-HashMap.prototype.get = __empty_func__;
-HashMap.prototype.put = __empty_func__;
-
-var PFont           = __empty_func__;
-PFont.list = __empty_func__;
-
-var IOException     = __empty_func__;
-var ParseException     = __empty_func__;
-var SearchException     = __empty_func__;
-var NullPointerException     = __empty_func__;
-
 var FixedSpring     = __empty_func__;
 var Spring2D        = __empty_func__;
 var Particle        = __empty_func__;
@@ -156,3 +144,39 @@ var EggRing = __empty_func__;
 var OverRect = __empty_func__;
 var OverCircle = __empty_func__;
 var SpinSpots = __empty_func__;
+
+var Slurper = __empty_func__;
+var Place = __empty_func__;
+var Node = __empty_func__;
+Node.prototype.increment = __empty_func__;
+var Edge = __empty_func__;
+
+/* Part of processing: 
+
+var HashMap         = __empty_func__;
+HashMap.prototype.get = __empty_func__;
+HashMap.prototype.put = __empty_func__;
+
+var PFont           = __empty_func__;
+PFont.list = __empty_func__;
+
+var IOException     = __empty_func__;
+var ParseException     = __empty_func__;
+var SearchException     = __empty_func__;
+var NullPointerException     = __empty_func__;
+
+
+var SimpleDateFormat = __empty_func__;
+SimpleDateFormat.prototype.parse = function(i) { return new Date(i); }
+SimpleDateFormat.prototype.format = function(i) { return i.toString(); }
+
+var Integer = function(i) { this.intValue =  function() { return i; } }
+var RankedList = __empty_func__;
+var Integrator = __empty_func__;
+var ColorIntegrator = __empty_func__;
+Integrator.prototype.target = __empty_func__;
+var textMode = __empty_func__;
+var createWriter  = __empty_func__;
+var File = __empty_func__;
+
+/* end */
