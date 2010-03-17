@@ -816,40 +816,21 @@
     };
 
     /////////////////////////////////////////
-    // Java commons
-
-    Object.prototype.equals = function(obj) { return obj === this; };
-    Object.prototype.hashCode = function() {
-      if(this.$id == undefined) {
-        this.$id = ((Math.floor(Math.random() * 0x10000) - 0x8000) << 16) | Math.floor(Math.random() * 0x10000);
-      }
-      return this.$id;
-    }
-    String.prototype.equals = function(obj) { return obj == this; };
-    String.prototype.hashCode = function() {
-      var hash = 0;
-      for(var i=0;i<this.length;++i) {
-        hash = (hash * 31 + this.charCodeAt(i)) & 0x0FFFFFFFF;
-      }
-      return hash < 0x080000000 ? hash : (hash - 0x0100000000);
-    }
-
-    /////////////////////////////////////////
     // HashMap
-    p.HashMap = function HashMap() {
+    p.HashMap =     function HashMap() {
       var initialCapacity = arguments.length > 0 ? arguments[0] : 16;
       var loadFactor = arguments.length > 1 ? arguments[1] : 0.75;
- 
+  
       var buckets = new Array(initialCapacity);
       var count = 0;
-   
+     
       this.clear = function() { count = 0; buckets = new Array(initialCapacity); }
       this.containsKey = function(key) { 
-        var index = key.hashCode() % buckets.length;
+        var index = virtHashCode(key) % buckets.length;
         var bucket = buckets[index];
         if(bucket == undefined) return false;
         for(var i=0; i < bucket.length; ++i)
-          if(bucket[i].key.equals(key)) return true;
+          if(virtEquals(bucket[i].key, key)) return true;
         return false;
       };
       this.containsValue = function(value) {
@@ -857,32 +838,32 @@
           var bucket = buckets[i];
           if(bucket == undefined) continue;
           for(var j=0; j < bucket.length; ++j) {
-            if(bucket[j].value.equals(value))
+            if(virtEquals(bucket[j].value, value))
               return true;
           }
         }
         return false;
       };
       this.get = function(key) {
-        var index = key.hashCode() % buckets.length;
+        var index = virtHashCode(key) % buckets.length;
         var bucket = buckets[index];
         if(bucket == undefined) return null;
         for(var i=0; i < bucket.length; ++i)
-          if(bucket[i].key.equals(key)) return bucket[i].value;
+          if(virtEquals(bucket[i].key, key)) return bucket[i].value;
         return null;
       };
       this.isEmpty = function() { return count == 0; };
       this.put = function(key, value) {
-        var index = key.hashCode() % buckets.length;
+        var index = virtHashCode(key) % buckets.length;
         var bucket = buckets[index];
         if(bucket == undefined) { 
           ++count;
           buckets[index] = [ {key: key, value: value } ];
-          ensureLoad();  
+          ensureLoad();
           return null;
         }	
         for(var i=0; i < bucket.length; ++i) {
-          if(bucket[i].key.equals(key)) {
+          if(virtEquals(bucket[i].key, key)) {
             var previous = bucket[i].value;
             bucket[i].value = value;
             return previous;
@@ -894,11 +875,11 @@
         return null;
       };
       this.remove = function(key) {
-        var index = key.hashCode() % buckets.length;
+        var index = virtHashCode(key) % buckets.length;
         var bucket = buckets[index];
         if(bucket == undefined) return null;
         for(var i=0; i < bucket.length; ++i) {
-          if(bucket[i].key.equals(key)) {
+          if(virtEquals(bucket[i].key, key)) {
             --count;
             var previous = bucket[i].value;
             if(bucket.length > 1)
@@ -911,7 +892,7 @@
         return null;
       };
       this.size = function() { return count; }
-    
+      
       function ensureLoad() {
         if(count <= loadFactor * buckets.length) return;
         var allEntries = [];
@@ -921,11 +902,38 @@
         }
         buckets = new Array(buckets.length * 2);
         for(var i=0; i < allEntries.length; ++i) {
-          var index = allEntries[i].key.hashCode() % buckets.length;
+          var index = virtHashCode(allEntries[i].key) % buckets.length;
           var bucket = buckets[index];
           if(bucket == undefined) buckets[index] = bucket = [];
           bucket.push(allEntries[i]);        
         }
+      }
+    }
+    
+    function virtHashCode(obj) {
+      if(obj.constructor == String) {
+        var hash = 0;
+        for(var i=0;i<obj.length;++i) {
+          hash = (hash * 31 + obj.charCodeAt(i)) & 0x0FFFFFFFF;
+        }
+        return hash < 0x080000000 ? hash : (hash - 0x0100000000);
+      } else if("hashCode" in obj) {
+        return obj.hashCode.call(obj);
+      } else {
+        if(obj.$id == undefined) {
+          obj.$id = ((Math.floor(Math.random() * 0x10000) - 0x8000) << 16) | Math.floor(Math.random() * 0x10000);
+        }
+        return obj.$id;     
+      }
+    }
+
+    function virtEquals(obj, other) {
+      if(obj.constructor == String) {
+        return obj == other;
+      } else if("equals" in obj) {
+        return obj.equals.call(obj, other);
+      } else {
+        return obj == other;
       }
     }
 
