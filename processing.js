@@ -135,9 +135,44 @@
     // Force characters-as-bytes to work.
     aCode = aCode.replace(/('(.){1}')/g, "$1.charCodeAt(0)");
 
+    // Parse out @pjs directive, if any.
+    p.pjs = {imageCache: {pending: 0}}; // by default we have an empty imageCache, no more.
+    var dm = /\/\*\s*@pjs\s*([^\/\*]+)\*\//.exec(aCode);
+    if (dm && dm.length == 2) {
+      var directives = dm.splice(1, 2)[0].replace('\n', '').replace('\r', '').split(';');
+
+      // We'll L/RTrim, and also remove any surrounding double quotes (e.g., just take string contents)
+      var clean = function(s) { return s.replace(/^\s*\"?/, '').replace(/\"?\s*$/, ''); };
+
+      for (var i=0, dl=directives.length; i<dl; i++) {
+        var pair = directives[i].split('=');
+        if (pair && pair.length == 2) {
+          var key = clean(pair[0]);
+          var value = clean(pair[1]);
+
+          // A few directives require work beyond storying key/value pairings
+          if (key == "preload") {
+            var list = value.split(',');
+            // All pre-loaded images will get put in imageCache, keyed on filename
+            for (var j=0, ll=list.length; j<ll; j++) {
+              var imageName = clean(list[j]);
+              var img = new Image();
+              img.onload = function() { p.pjs.imageCache.pending--; };
+              p.pjs.imageCache.pending++;
+              p.pjs.imageCache[imageName] = img;
+              img.src = imageName;
+            }
+          } else {
+            p.pjs[key] = value;
+          }
+        }
+      }
+      aCode = aCode.replace(dm[0], '');
+    }
+
     // Saves all strings into an array
     // masks all strings into <STRING n>
-    // to be replaced with the array strings after parsing is finishes
+    // to be replaced with the array strings after parsing is finished
     var strings = [];
     aCode = aCode.replace(/(["'])(\\\1|.)*?(\1)/g, function(all) {
       strings.push(all);
@@ -199,7 +234,7 @@
     }
 
     // float foo = 5;
-    aCode = aCode.replace(/(?:static\s+)?(?:final\s+)?(\w+)((?:\[\])+| ) *(\w+)\[?\]?(\s*[=,;])/g, function (all, type, arr, name, sep) {
+    aCode = aCode.replace(/(?:static\s+)?(?:final\s+)?(\w+)((?:\[\])+|\s)\s*(\w+)\[?\]?(\s*[=,;])/g, function (all, type, arr, name, sep) {
       if (type === "return") {
         return all;
       } else {
@@ -754,7 +789,26 @@
       return newary;
     };
 
-
+    p.arrayCopy = function arrayCopy(src, srcPos, dest, destPos, length) {
+      if(arguments.length === 2) {
+        // recall itself and copy src to dest from start index 0 to 0 of src.length
+        p.arrayCopy(src, 0, srcPos, 0, src.length);
+      } else if (arguments.length === 3) {
+        // recall itself and copy src to dest from start index 0 to 0 of length
+        p.arrayCopy(src, 0, srcPos, 0, dest);
+      } else if (arguments.length === 5) {
+        // copy src to dest from index srcPos to index destPos of length recursivly on objects
+        for (var i=srcPos, j=destPos; i < length+srcPos; i++, j++) {
+          if(src[i] && typeof src[i] == "object"){
+            // src[i] is not null and is another object or array. go recursive
+            p.arrayCopy(src[i],0,dest[j],0,src[i].length);
+          } else {
+            // standard type, just copy
+            dest[j] = src[i];
+          }
+        }
+      }      
+    };
 
     p.ArrayList = function ArrayList(size, size2, size3) {
 
@@ -785,6 +839,9 @@
       array.get = function (i) {
         return this[i];
       };
+			array.contains = function(item) {
+				return this.indexOf(item) !== -1;
+			};
       array.add = function (item) {
         return this.push(item);
       };
@@ -2070,31 +2127,26 @@
     String.prototype.replaceAll = function (re, replace) {
       return this.replace(new RegExp(re, "g"), replace);
     };
-		
-		String.prototype.equals = function equals( str ) {
-      var ret = true;
 
-      if ( this.length === str.length ) {
-        for ( var i = 0; i < this.length; i++) {
-          if ( this.charAt( i ) !== str.charAt( i ) ) {
-            ret = false;
-            break;
-          }
-        }
-      } else {
-        ret = false;
-      }
-
-      return ret;
+    String.prototype.equals = function equals( str ) {
+      return this.valueOf() === str.valueOf();
     };
-		
+
+    String.prototype.toCharArray = function() {
+      var chars = this.split("");
+      for (var i = chars.length -1; i >= 0; i--) {
+        chars[i] = chars[i].charCodeAt(0);
+      }
+      return chars;
+    };
+
     p.match = function (str, regexp) {
       return str.match(regexp);
     };
 
     // tinylog lite JavaScript library
     // http://purl.eligrey.com/tinylog/lite
-        var tinylogLite = (function () {
+    var tinylogLite = (function () {
       "use strict";
 
       var tinylogLite = {},
@@ -2122,14 +2174,15 @@
           width: "100%",
           height: "15%",
           fontFamily: "sans-serif",
-          color: "black",
-          backgroundColor: "white"
+          color: "#ccc",
+          backgroundColor: "black"
         },
         outputStyles = {
           position: "relative",
           fontFamily: "monospace",
           overflow: "auto",
-          height: "100%"
+          height: "100%",
+          paddingTop: "5px"
         },
         resizerStyles = {
           height: "5px",
@@ -2139,23 +2192,26 @@
         },
         closeButtonStyles = {
           position: "absolute",
-          top: "0px",
-          right: "15px",
-          border: "1px solid black",
-          borderTop: "none",
+          top: "5px",
+          right: "20px",
+          color: "#111",
+          MozBorderRadius: "4px",
+          webkitBorderRadius: "4px",
+          borderRadius: "4px",
           cursor: "pointer",
-          fontWeight: "bold",
+          fontWeight: "normal",
           textAlign: "center",
-          padding: "1px 5px",
-          backgroundColor: "#eb0000"
+          padding: "3px 5px",
+          backgroundColor: "#333",
+          fontSize: "12px"
         },
         entryStyles = {
-          borderBottom: "1px solid #d3d3d3",
+          //borderBottom: "1px solid #d3d3d3",
           minHeight: "16px"
         },
         entryTextStyles = {
           fontSize: "12px",
-          margin: "0 5px 0 5px",
+          margin: "0 8px 0 8px",
           maxWidth: "100%",
           whiteSpace: "pre-wrap",
           overflow: "auto"
@@ -2318,7 +2374,7 @@
         );
     
         closeButton[$title] = "Close Log";
-        append(closeButton, createTextNode("X"));
+        append(closeButton, createTextNode("\u2716"));
     
         resizer[$title] = "Double-click to toggle log minimization";
     
@@ -3663,7 +3719,7 @@
     p.box = function( w, h, d ) {
       var c;
 
-      if(curContext)
+      if(p.use3DContext)
       {
         // user can uniformly scale the box by  
         // passing in only one argument.
@@ -5505,31 +5561,37 @@
           }
         }
 
-        // The parser adds custom methods to the processing context
-        // this renames p to processing so these methods will run
-        (function (processing) {
+        var executeSketch = function(processing) {
           with(processing) {
+            // Don't start until all specified images in the cache are preloaded
+            if (!pjs.imageCache.pending) {
             eval(parsedCode);
-          }
-        })(p);
-      }
 
       // Run void setup()
-      if (p.setup) {
+              if (setup) {
         inSetup = true;
-        p.setup();
+                setup();
       }
 
       inSetup = false;
 
-      if (p.draw) {
+              if (draw) {
         if (!doLoop) {
-          p.redraw();
+                  redraw();
+                } else {
+                  loop();
+                }
+              }
         } else {
-          p.loop();
+              window.setTimeout(executeSketch, 10, processing);
         }
       }
+        };
 
+        // The parser adds custom methods to the processing context
+        // this renames p to processing so these methods will run
+        executeSketch(p);
+      }
 
       //////////////////////////////////////////////////////////////////////////
       // Event handling
