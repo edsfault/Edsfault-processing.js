@@ -135,8 +135,6 @@
     // Force characters-as-bytes to work.
     aCode = aCode.replace(/('(.){1}')/g, "$1.charCodeAt(0)");
 
-    // Parse out @pjs directive, if any.
-    p.pjs = {imageCache: {pending: 0}}; // by default we have an empty imageCache, no more.
     var dm = /\/\*\s*@pjs\s*([^\/\*]+)\*\//.exec(aCode);
     if (dm && dm.length == 2) {
       var directives = dm.splice(1, 2)[0].replace('\n', '').replace('\r', '').split(';');
@@ -5532,6 +5530,8 @@
     ////////////////////////////////////////////////////////////////////////////
 
     p.init = function init(code) {
+      // Parse out @pjs directive, if any.
+      p.pjs = {imageCache: {pending: 0}}; // by default we have an empty imageCache, no more.
 
       if (code) {
         var parsedCode = Processing.parse(code, p);
