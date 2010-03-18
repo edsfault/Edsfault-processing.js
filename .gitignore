@@ -1,6 +1,8 @@
 release/
 dist/
 logs/
+tools/js/
+lalr/parts/processing.js
 
 Unsaved\ Document*
 .DS_Store

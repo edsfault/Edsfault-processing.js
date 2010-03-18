@@ -69,11 +69,15 @@ TEST ?= $(error Specify a test filename/dir in TEST when using check-test)
 check-one:
 	$(TOOLSDIR)/runtests.py $(JS) -t $(TEST)
 
-clean:
+clean: restore-lalr
 	rm -fr ./release
+	
 
-$(LALRDIR)/parts/processing.js:
-	cp ./processing.js $(LALRDIR)/parts/processing.js
+./processing.js~:
+	cp ./processing.js ./processing.js~
+
+$(LALRDIR)/parts/processing.js: ./processing.js~
+	cp ./processing.js~ $(LALRDIR)/parts/processing.js
 
 backup-lalr: $(LALRDIR)/parts/processing.js
 
@@ -81,4 +85,6 @@ build-lalr: $(LALRDIR)/parts/processing.js
 	$(LALRDIR)/buildlalr.py --build $(LALRDIR)/parts/processing.js $(LALRDIR)/grammar/Processing.xml $(LALRDIR)/parts ./processing.js
 
 restore-lalr:
-	cp $(LALRDIR)/parts/processing.js ./processing.js
+	rm $(LALRDIR)/parts/processing.js
+	cp ./processing.js~ ./processing.js
+	rm ./processing.js~
