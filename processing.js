@@ -270,7 +270,10 @@
   Processing.parse = function parse(aCode, p) {
 
     // Force characters-as-bytes to work.
-    aCode = aCode.replace(/('(.){1}')/g, "$1.charCodeAt(0)");
+    //aCode = aCode.replace(/('(.){1}')/g, "$1.charCodeAt(0)");
+    aCode = aCode.replace(/'.{1}'/g, function(all) {
+      return "(new Char(" + all + "))";
+    });
 
     var dm = /\/\*\s*@pjs\s*([^\/\*]+)\*\//.exec(aCode);
     if (dm && dm.length == 2) {
@@ -569,7 +572,7 @@
         return returnString;
       });
     }
-
+    
     return aCode;
   };
 
@@ -788,7 +791,27 @@
     // The current animation frame
     p.frameCount = 0;
 
+    ////////////////////////////////////////////////////////////////////////////
+    // Char handling
+    ////////////////////////////////////////////////////////////////////////////    
+    var charMap = {};
 
+    function Char(chr) {
+      if ( typeof chr === 'string' && chr.length === 1 ) {
+        this.code = chr.charCodeAt(0);
+      } else {
+        this.code = NaN;
+      }
+
+      return ( typeof charMap[this.code] === 'undefined' ) ? charMap[this.code] = this : charMap[this.code];   
+    };
+
+    Char.prototype.toString = function() {
+      return String.fromCharCode(this.code);
+    };
+    Char.prototype.valueOf = function() {
+      return this.code;
+    };
 
     ////////////////////////////////////////////////////////////////////////////
     // Array handling
@@ -2045,6 +2068,17 @@
     p.loadStrings = function loadStrings(url) {
       return ajax(url).split("\n");
     };
+    
+    p.loadBytes = function loadBytes(url) {
+      var string = ajax(url);
+      var ret = new Array( string.length );
+      
+      for ( var i = 0; i < string.length; i++) {
+        ret[i] = string.charCodeAt(i);
+      }
+      
+      return ret;
+    };
 
     // nf() should return an array when being called on an array, at the moment it only returns strings. -F1LT3R
     // This breaks the join() ref-test. The Processing.org documentation says String or String[]. SHOULD BE FIXED NOW
@@ -2492,10 +2526,10 @@
     p.char = function char( key ) {
       var ret;
 
-      if ( arguments.length === 1 && typeof key === "number" && (key + "").indexOf( '.' ) === -1 ) {
-        ret = String.fromCharCode( key );
+      if ( arguments.length === 1 && typeof key === "number" && (key + "").indexOf( '.' ) === -1 ) { // not a float
+        ret = new Char(String.fromCharCode(key));
       } else if ( arguments.length === 1 && typeof key === "object" && key.constructor === Array ) {
-        ret = new Array(0);
+        ret = [];
         
         for ( var i = 0; i < key.length; i++ ) {
           ret[i] = char( key[i] );
@@ -2553,18 +2587,13 @@
             ret = 0;
           }
         } else if ( typeof val === 'string' ) {
-          if ( val.indexOf(' ') > -1 ) {
+          ret = parseInt( val, 10 ); // Force decimal radix. Don't convert hex or octal (just like p5)
+
+          if ( isNaN( ret ) ) {
             ret = 0;
-          } else if ( val.length === 1 ) {
-
-            ret = val.charCodeAt( 0 );
-          } else {
-            ret = parseInt( val, 10 ); // Force decimal radix. Don't convert hex or octal (just like p5)
-
-            if ( isNaN( ret ) ) {
-              ret = 0;
-            }
           }
+        } else if ( typeof val === 'object' && val.constructor === Char ) {
+          ret = val.code;
         } else if ( typeof val === 'object' && val.constructor === Array ) {
           ret = new Array( val.length );
 
@@ -2639,7 +2668,6 @@
       var ret;
 
       if ( arguments.length === 1 ) {
-
         if ( typeof val === 'number' ) {
           // float() not allowed to handle floats.
           if ( ( val + "" ).indexOf( '.' ) > -1 ) {
@@ -2648,7 +2676,6 @@
             ret = val.toFixed(1);
           }
         } else if ( typeof val === 'boolean' ) {
-
           if ( val === true ) {
             ret = 1.0;
           } else {
@@ -2656,16 +2683,9 @@
           }
           ret = ret.toFixed(1);
         } else if ( typeof val === 'string' ) {
-
-          if ( val.indexOf(' ') > -1 ) {
-            ret = NaN;
-          } else if ( val.length === 1 ) {
-            // Need this to convert chars like @ properly.
-            ret = val.charCodeAt( 0 );
-            ret = ret.toFixed(1);
-          } else {
-            ret = parseFloat( val );
-          }
+          ret = parseFloat( val );
+        } else if ( typeof val === 'object' && val.constructor === Char ) {
+          ret = val.code.toFixed(1);  
         } else if ( typeof val === 'object' && val.constructor === Array ) {
 
           ret = new Array( val.length );
@@ -2745,8 +2765,18 @@
       return ret;
     };
 
-    p.dist = function dist(x1, y1, x2, y2) {
-      return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    p.dist = function() {
+      var dx, dy, dz = 0;      
+      if (arguments.length === 4) {
+        dx = arguments[0] - arguments[2];
+        dy = arguments[1] - arguments[3];
+      } 
+      else if (arguments.length === 6) {
+        dx = arguments[0] - arguments[3];
+        dy = arguments[1] - arguments[4];
+        dz = arguments[2] - arguments[5];
+      }      
+      return Math.sqrt(dx * dx + dy * dy + dz * dz);
     };
 
     p.map = function map(value, istart, istop, ostart, ostop) {
@@ -2795,9 +2825,26 @@
 
     };
 
-    //! This can't be right... right?
+    //! This can't be right... right? <corban> should be good now
+    // a byte is a number between -128 and 127
     p.byte = function (aNumber) {
-      return aNumber || 0;
+      if (typeof aNumber === 'object' && aNumber.constructor === Array) {
+        var bytes = [];
+        for(var i = 0; i < aNumber.length; i++) {
+          bytes[i] = p.byte(aNumber[i]);  
+        }
+        return bytes;
+      } else {
+        if (aNumber >= -128 && aNumber < 128) {
+          return aNumber;
+        } else {
+          if ( aNumber >= 128) {
+            return p.byte(-256 + aNumber);
+          } else if ( aNumber < -128) {
+            return p.byte(256 + aNumber);
+          }
+        }
+      }
     };
 
     p.norm = function norm(aNumber, low, high) {
@@ -4898,12 +4945,14 @@
             // if 3 component color was passed in, alpha will be 1
             // otherwise it will already be normalized.
             curContext.clearColor(c[0] / 255, c[1] / 255, c[2] / 255, c[3]);
+            curContext.clear( curContext.COLOR_BUFFER_BIT | curContext.DEPTH_BUFFER_BIT );
           }
 
           // user passes in value which ranges from 0-255, but opengl
           // wants a normalized value.
           else if (typeof arguments[0] === "number") {
             curContext.clearColor(col[0] / 255, col[0] / 255, col[0] / 255, 1.0 );
+            curContext.clear( curContext.COLOR_BUFFER_BIT | curContext.DEPTH_BUFFER_BIT );
           }
         } else if (arguments.length === 2) {
           if (typeof arguments[0] === "string") {
@@ -4911,6 +4960,7 @@
             // Processing is ignoring alpha
             // var a = arguments[0]/255;
             curContext.clearColor(c[0] / 255, c[1] / 255, c[2] / 255, 1.0);
+            curContext.clear( curContext.COLOR_BUFFER_BIT | curContext.DEPTH_BUFFER_BIT );
           }
           // first value is shade of gray, second is alpha
           // background(0,255);
@@ -4921,6 +4971,7 @@
             // var a = arguments[0]/255;
             a = 1.0;
             curContext.clearColor(c, c, c, a);
+            curContext.clear( curContext.COLOR_BUFFER_BIT | curContext.DEPTH_BUFFER_BIT );
           }
         }
 
@@ -4929,6 +4980,7 @@
           // Processing seems to ignore this value, so just use 1.0 instead.
           //var a = arguments.length === 3? 1.0: arguments[3]/255;
           curContext.clearColor(col[0] / 255, col[1] / 255, col[2] / 255, 1);
+          curContext.clear( curContext.COLOR_BUFFER_BIT | curContext.DEPTH_BUFFER_BIT );
         }
       } else { // 2d context
         if (arguments.length) {
