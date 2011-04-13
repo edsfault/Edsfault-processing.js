@@ -7896,6 +7896,32 @@
       return results.length > 0 ? results : null;
     };
     /**
+    * The contains(string) function returns true if the string passed in the parameter
+    * is a substring of this string. It returns false if the string passed
+    * in the parameter is not a substring of this string.
+    *
+    * @param {String} The string to look for in the current string
+    *
+    * @return {boolean} returns true if this string contains
+    * the string passed as parameter. returns false, otherwise.
+    *
+    */
+    p.__contains = function (subject, subStr) {
+      if (typeof subject !== "string") {
+        arguments.shift();
+        return subject.contains.apply(subject, arguments);
+      }
+      //Parameter is not null AND
+      //The type of the parameter is the same as this object (string)
+      //The javascript function that finds a substring returns 0 or higher
+      return (
+        (subject !== null) &&
+        (subStr !== null) &&
+        (typeof subStr === "string") &&
+        (subject.indexOf(subStr) > -1)
+      ) ;
+    } ;
+    /**
      * The __replaceAll() function searches all matches between a substring (or regular expression) and a string, 
      * and replaces the matched substring with a new substring
      *
@@ -16403,7 +16429,7 @@
       "translate", "triangle", "trim", "unbinary", "unhex", "updatePixels",
       "use3DContext", "vertex", "width", "XMLElement", "year", "__frameRate",
       "__keyPressed", "__mousePressed", "__int_cast", "__replace", "__replaceAll", 
-      "__replaceFirst", "__equals", "__hashCode", "__toCharArray", "__printStackTrace"];
+      "__replaceFirst", "__contains", "__equals", "__hashCode", "__toCharArray", "__printStackTrace"];
 
     var members = {};
     var i, l;
@@ -16747,7 +16773,7 @@
       var repeatJavaReplacement;
       do {
         repeatJavaReplacement = false;
-        s = s.replace(/((?:'\d+'|\b[A-Za-z_$][\w$]*\s*(?:"[BC]\d+")*)\s*\.\s*(?:[A-Za-z_$][\w$]*\s*(?:"[BC]\d+"\s*)*\.\s*)*)(replace|replaceAll|replaceFirst|equals|hashCode|toCharArray|printStackTrace)\s*"B(\d+)"/g, 
+        s = s.replace(/((?:'\d+'|\b[A-Za-z_$][\w$]*\s*(?:"[BC]\d+")*)\s*\.\s*(?:[A-Za-z_$][\w$]*\s*(?:"[BC]\d+"\s*)*\.\s*)*)(replace|replaceAll|replaceFirst|contains|equals|hashCode|toCharArray|printStackTrace)\s*"B(\d+)"/g, 
           function(all, subject, method, atomIndex) {
             var atom = atoms[atomIndex];
             repeatJavaReplacement = true;
